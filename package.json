@@ -1,0 +1,27 @@
+{
+  "name": "mean-cms-srv",
+  "version": "1.0.0",
+  "description": "Backend projet for MEAN-CMS",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npm run lint & nodemon server.js",
+    "lint" : "./node_modules/.bin/eslint **/*.js"
+  },
+  "keywords": [
+    "MongoDB",
+    "Express",
+    "Angular",
+    "Node"
+  ],
+  "author": "Yusuf Heri",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^6.3.0",
+    "nodemon": "^1.19.2"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1"
+  }
+}
