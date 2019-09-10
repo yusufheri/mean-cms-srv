@@ -1,4 +1,5 @@
 let express = require('express');
+let mongoose = require('mongoose');
 let router = express.Router();
 const BlogPost = require('../models/blogpost');
 
@@ -49,6 +50,23 @@ router.delete('/blog-posts/:id', (req, res) => {
 			return res.status(500).json(err);
 		}
 		res.status(202).json({message : `blog post with ${blogPost._id} has deleted`});
+	});
+});
+
+router.delete('/blog-posts', (req, res) => {
+	const ids = req.query.ids;
+	console.log('query', ids);
+	const allIds = ids.split(',').map(id => {
+		if (id.match(/^[0-9a-fA-F]{24}$/)) {
+			return mongoose.Types.ObjectId((id));
+		} else {
+			console.log('id is not valid', id);
+		}
+	});
+	const condition = { _id: {$in : allIds} };
+	BlogPost.deleteMany(condition, (err, result) => {
+		if (err) { return res.status(500).json(err); }
+		res.status(202).json(result);
 	});
 });
 module.exports = router;
