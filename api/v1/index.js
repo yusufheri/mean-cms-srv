@@ -5,7 +5,6 @@ const crypto = require('crypto');
 const path = require('path');
 
 
-
 let router = express.Router();
 const BlogPost = require('../models/blogpost');
 
@@ -43,20 +42,28 @@ const storage = multer.diskStorage({
 	destination: './uploads/',
 	filename: function(req, file, callback) {
 		crypto.pseudoRandomBytes(16, function(err, raw) {
-			if (err) return callback(err);
+			if (err) return callback(err);			
+			lastUploadedImageName = raw.toString('hex') + path.extname(file.originalname);
+			console.log('lastUploadedImageName', lastUploadedImageName);			
 			callback(null, raw.toString('hex') + path.extname(file.originalname));
 		});
 	}
 });
 const upload = multer({storage});
+
 // file upload
-router.post('/blog-posts/images', upload.single('blogimage'), (req, res) => {
+router.post('/blog-posts/images', upload.single('image'), (req, res) => {
+	console.log(req.file);
+	if (!req.file.originalname.match(/\.(jpg|png|jpeg|gif)$/)) {
+		return res.status(400).json({msg: 'Only image file accepted please'});
+	}
 	res.status(201).send({ filename: req.file.filename, file: req.file});
 });
 
 router.post('/blog-posts', (req, res) => {
-	console.log('req.body', req.body);
-	const blogPost = new BlogPost(req.body);
+	//	console.log('req.body', req.body);
+	//	const blogPost = new BlogPost(req.body)
+	const blogPost = new BlogPost({ ...req.body, image: lastUploadedImageName });
 	blogPost.save((err, bloPost) => {
 		if (err) {
 			return res.status(500).json(err);
@@ -65,6 +72,7 @@ router.post('/blog-posts', (req, res) => {
 	});
 });
 
+let lastUploadedImageName = '';
 
 router.delete('/blog-posts/:id', (req, res) => {
 	const id = req.params.id;
@@ -92,4 +100,20 @@ router.delete('/blog-posts', (req, res) => {
 		res.status(202).json(result);
 	});
 });
+
+router.put('/blog-posts/:id', upload.single('image'), (req, res) => {
+	const id = req.params.id;
+	const condition = { _id: id };
+	const blogPost = { ...req.body, image: lastUploadedImageName };
+	const update = { $set: blogPost };
+	const options = {
+		upsert: true, // Si le doc n'existe pas, crée un nouveau
+		new: true // Retourner le doc après modification
+	};
+	BlogPost.findOneAndUpdate(condition, update, options, (error, response) => {
+		if (error) return res.status(500).json({msg: 'Update failed', error: error});
+		res.status(200).json({ msg: `Document with id ${id} updated`, response: response});
+	});
+});
+
 module.exports = router;

@@ -1,4 +1,5 @@
 let express = require('express');
+let app = express();
 
 
 const router = require('./api/v1/index');
@@ -6,8 +7,11 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
+const uploader = require('path').join(__dirname, '/uploads');
+console.log('uploader', uploader);
+app.use(express.static(uploader));
+
 const connection = mongoose.connection;
-let app = express();
 app.set('port',( process.env.PORT || 4000));
 
 
