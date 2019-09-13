@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const crypto = require('crypto');
 const path = require('path');
+const resize = require('../../utils/resize');
 
 
 let router = express.Router();
@@ -63,7 +64,24 @@ router.post('/blog-posts/images', upload.single('image'), (req, res) => {
 router.post('/blog-posts', (req, res) => {
 	//	console.log('req.body', req.body);
 	//	const blogPost = new BlogPost(req.body)
-	const blogPost = new BlogPost({ ...req.body, image: lastUploadedImageName });
+
+	// const blogPost = new BlogPost({ ...req.body, image: lastUploadedImageName });
+	console.log('lastUploadedImageName', lastUploadedImageName);
+	const smallImagePath = `./uploads/${lastUploadedImageName}`;
+	const outputName = `./uploads/small-${lastUploadedImageName}`;
+	resize({path: smallImagePath, width: 200, height: 200, outputName: outputName })
+		.then(data => {
+			console.log('OK resize', data.size);
+		})
+		.catch(err => console.error('err from resize', err));
+	
+
+	const blogPost = new BlogPost({
+		...req.body,
+		image: lastUploadedImageName,
+		smallImage: `small-${lastUploadedImageName}`
+	});
+
 	blogPost.save((err, bloPost) => {
 		if (err) {
 			return res.status(500).json(err);
@@ -102,14 +120,57 @@ router.delete('/blog-posts', (req, res) => {
 });
 
 router.put('/blog-posts/:id', upload.single('image'), (req, res) => {
+
+	const smallImagePath = `./uploads/${lastUploadedImageName}`;
+	const outputName = `./uploads/small-${lastUploadedImageName}`;
+	resize({path: smallImagePath, width: 200, height: 200, outputName: outputName })
+		.then(data => {
+			console.log('OK resize', data.size);
+		})
+		.catch(err => console.error('err from resize', err));
+
 	const id = req.params.id;
 	const condition = { _id: id };
-	const blogPost = { ...req.body, image: lastUploadedImageName };
+	const blogPost = { ...req.body, image: lastUploadedImageName, smallImage: `small-${lastUploadedImageName}` };
 	const update = { $set: blogPost };
 	const options = {
 		upsert: true, // Si le doc n'existe pas, crée un nouveau
 		new: true // Retourner le doc après modification
 	};
+
+	
+	BlogPost.findOneAndUpdate(condition, update, options, (error, response) => {
+		if (error) return res.status(500).json({msg: 'Update failed', error: error});
+		res.status(200).json({ msg: `Document with id ${id} updated`, response: response});
+	});
+});
+
+router.put('/blog-posts/like-post/:id', (req, res) => {
+
+	const id = req.params.id;
+	const condition = { _id: id };
+	const update = { $inc: {like: 1} };
+	const options = {
+		upsert: true, // Si le doc n'existe pas, crée un nouveau
+		new: true // Retourner le doc après modification
+	};
+
+	
+	BlogPost.findOneAndUpdate(condition, update, options, (error, response) => {
+		if (error) return res.status(500).json({msg: 'Update failed', error: error});
+		res.status(200).json({ msg: `Document with id ${id} updated`, response: response});
+	});
+});
+
+router.put('/blog-posts/dislike-post/:id', (req, res) => {
+
+	const id = req.params.id;
+	const condition = { _id: id };
+	const update = { $inc: {disLike: 1} };
+	const options = {
+		upsert: true, // Si le doc n'existe pas, crée un nouveau
+		new: true // Retourner le doc après modification
+	};	
 	BlogPost.findOneAndUpdate(condition, update, options, (error, response) => {
 		if (error) return res.status(500).json({msg: 'Update failed', error: error});
 		res.status(200).json({ msg: `Document with id ${id} updated`, response: response});
