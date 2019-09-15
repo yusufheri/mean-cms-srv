@@ -93,6 +93,9 @@ router.post('/blog-posts', (req, res) => {
 let lastUploadedImageName = '';
 
 router.delete('/blog-posts/:id', (req, res) => {
+	if (!req.isAuthenticated()) {
+		return res.status(401).json({result: 'KO', msg: 'NOT authorized to delete a blog post'})
+	}
 	const id = req.params.id;
 	BlogPost.findByIdAndDelete(id, (err, blogPost) => {
 		if (err) {
@@ -103,6 +106,9 @@ router.delete('/blog-posts/:id', (req, res) => {
 });
 
 router.delete('/blog-posts', (req, res) => {
+	if (!req.isAuthenticated()) {
+		return res.status(401).json({result: 'KO', msg: 'NOT authorized to delete  blog posts selected'});
+	}
 	const ids = req.query.ids;
 	console.log('query', ids);
 	const allIds = ids.split(',').map(id => {
@@ -146,6 +152,10 @@ router.put('/blog-posts/:id', upload.single('image'), (req, res) => {
 });
 
 router.put('/blog-posts/like-post/:id', (req, res) => {
+	console.log('isAuthenticated', req.isAuthenticated());
+	if (!req.isAuthenticated()) {
+		return res.status(401).json({result: 'KO', msg: 'NOT authorized to like a blog post'})
+	}
 
 	const id = req.params.id;
 	const condition = { _id: id };
@@ -163,7 +173,10 @@ router.put('/blog-posts/like-post/:id', (req, res) => {
 });
 
 router.put('/blog-posts/dislike-post/:id', (req, res) => {
-
+	console.log('isAuthenticated', req.isAuthenticated());
+	if (!req.isAuthenticated()) {
+		return res.status(401).json({result: 'KO', msg: 'NOT authorized to dislike a blog post'})
+	}
 	const id = req.params.id;
 	const condition = { _id: id };
 	const update = { $inc: {disLike: 1} };
