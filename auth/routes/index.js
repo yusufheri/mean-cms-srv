@@ -33,4 +33,9 @@ router.get('/registre/all', (req, res) => {
 	res.status(200).json({msg: 'Success'});
 });
 
+router.get('/logout', (req, res) => {
+	req.logOut();
+	res.status(200).json({msg: 'Logged out successfully'});
+});
+
 module.exports = router;
